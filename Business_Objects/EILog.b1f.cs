@@ -87,9 +87,40 @@ namespace EInvoice.Business_Objects
                 }
 
                 objform.Freeze(true);
-                                            
+
+                 
+                    
+                 
+                                                                                        
+
                 DataTable dt = new DataTable();
-                string query = "SELECT * FROM( ";
+                string query = "SELECT ";
+                query += " \"DocNum\" as \"Doc Num\", ";
+                query += " \"DocEntry\" as \"DocEntry\", ";
+                query += " \"DocDate\" as \"Doc Date\", ";
+                query += " \"INVTyp\" as \"Doc Type\", ";
+                query += " \"QRCode\" as \"QR Code\", ";
+                query += " \"EINVStat\" as \"E - Inv Status\", ";
+                query += " \"QrStat\" as \"QR Status\", ";
+                query += " \"IssueDt\" as \"E-Inv Date\", ";
+                query += " \"Issuetm\" as \"E-Inv time\", ";
+                query += " \"ErrList\" as \"Error\", ";
+                query += " \"WarnList\" as \"Warning\", ";
+                query += " \"SellVat\" as \"Seller VAT\", ";
+                query += " \"BuyVat\" as \"Buyer VAT\", ";
+                query += " \"ICV\" as \"ICV\", ";
+                query += " \"UUID\" as \"UUID\", ";
+                query += " \"PIH\" as \"PIH\", ";
+                query += " \"InvHash\" as \"InvHash\", ";
+                query += " \"RawQR\" as \"RawQR\", ";
+                query += " \"DeviceId\" as \"DeviceId\", ";
+                query += " \"INVXml\" as \"XML\", ";
+                query += " \"valid\" as \"valid\", ";
+                query += " \"UniqID\" as \"UniqID\", ";
+                query += " \"UniqReqID\" as \"UniqReqID\", ";
+                query += " \"INVTyp\" as \"INVTyp\" ";
+
+                query += " FROM(";
                 query += "SELECT COALESCE(IDoc.\"DocNum\",CDoc.\"DocNum\",DDoc.\"DocNum\") as \"DocNum\", ";
                 query += " COALESCE(IDoc.\"DocEntry\",CDoc.\"DocEntry\",DDoc.\"DocEntry\") as \"DocEntry\", ";
                 query += " COALESCE(IDoc.\"DocDate\",CDoc.\"DocDate\",DDoc.\"DocDate\") as \"DocDate\", ";
@@ -156,8 +187,8 @@ namespace EInvoice.Business_Objects
                     {
 
                         query += @" AND( IDOC.""Series""  in(" + "SELECT \"Series\" FROM nnm1 WHERE \"SeriesName\" ='"+ series +"' AND \"ObjectCode\"  ='13'" + ") or ";
-                        query += @"  CDOC.""Series""  in(" + "SELECT \"Series\" FROM nnm1 WHERE \"SeriesName\" ='" + series + "' AND \"ObjectCode\"  ='13'" + ") or ";
-                        query += @"  DDOC.""Series""  in(" + "SELECT \"Series\" FROM nnm1 WHERE \"SeriesName\" ='" + series + "' AND \"ObjectCode\"  ='14'" + ") ";
+                        query += @"  CDOC.""Series""  in(" + "SELECT \"Series\" FROM nnm1 WHERE \"SeriesName\" ='" + series + "' AND \"ObjectCode\"  ='14'" + ") or ";
+                        query += @"  DDOC.""Series""  in(" + "SELECT \"Series\" FROM nnm1 WHERE \"SeriesName\" ='" + series + "' AND \"ObjectCode\"  ='13'" + ") ";
                         query += ")";
 
                     }

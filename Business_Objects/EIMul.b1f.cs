@@ -188,7 +188,7 @@ namespace EInvoice.Business_Objects
 
                       
 
-                        lstrquery += @" AND t1.""Series""  in(" + "SELECT \"Series\" FROM nnm1 WHERE \"SeriesName\" ='" + series + "' AND \"ObjectCode\"  ='14'" + ")";
+                        lstrquery += @" AND t1.""Series""  in(" + "SELECT \"Series\" FROM nnm1 WHERE \"SeriesName\" ='" + series + "' AND \"ObjectCode\"   in('14','13')" + ")";
                     }
 
                   

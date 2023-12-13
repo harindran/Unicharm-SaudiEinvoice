@@ -23,7 +23,6 @@ namespace EInvoice.Common
         }
         #endregion
 
-
         public void Intialize(string[] args)
         {
             try
