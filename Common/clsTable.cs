@@ -36,6 +36,7 @@ namespace EInvoice.Common
             AddFields("@EICON", "Expctseries", "Except  Series", SAPbobsCOM.BoFieldTypes.db_Memo);
             AddFields("@EICON", "Cryspath", "Crystal Path", SAPbobsCOM.BoFieldTypes.db_Memo);
             AddFields("@EICON", "CloseInv", "Closed Invoice", SAPbobsCOM.BoFieldTypes.db_Alpha,10);
+            AddFields("@EICON", "Genmulstus", "Generate Multiple Status Multiple Invoice", SAPbobsCOM.BoFieldTypes.db_Alpha,10);
             AddFields("@EICON", "LiveDB", "Live Database", SAPbobsCOM.BoFieldTypes.db_Alpha,100);
 
 

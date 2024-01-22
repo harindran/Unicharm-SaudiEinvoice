@@ -339,7 +339,7 @@ namespace EInvoice.Common
                             case "179":
                             case "-133":
                             case "-179":
-                                clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess + pVal.FormTypeEx);
+                               // clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess + pVal.FormTypeEx);
                                 objInvoice.Item_Event(FormUID, ref pVal, ref BubbleEvent);                                
                                 break;
                         }
@@ -350,7 +350,7 @@ namespace EInvoice.Common
                         {
                             case "133":
                             case "179":
-                                clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess);
+                               // clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess);
                                 objInvoice.Item_Event(FormUID, ref pVal, ref BubbleEvent);
                                 break;
                             default:
@@ -359,7 +359,7 @@ namespace EInvoice.Common
                         break;
                     case SAPbouiCOM.BoEventTypes.et_FORM_CLOSE:                        
                         if (pVal.FormTypeEx != "425") return;
-                        clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess);
+                     //   clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess);
                         objInvoice.Item_Event(FormUID, ref pVal, ref BubbleEvent);
                         break;
                     case SAPbouiCOM.BoEventTypes.et_CLICK:
@@ -368,7 +368,7 @@ namespace EInvoice.Common
                         {
                             case "133":
                             case "179":
-                                clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess);                                
+                              //  clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess);                                
                                 objInvoice.Item_Event(FormUID, ref pVal, ref BubbleEvent);
                                 break;                                
                         }                           
@@ -376,7 +376,7 @@ namespace EInvoice.Common
                     case SAPbouiCOM.BoEventTypes.et_FORM_DRAW:
                         if (pVal.FormTypeEx == "179")
                         {
-                            clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess);
+                           // clsModule.objaddon.objglobalmethods.WriteErrorLog(pVal.EventType.ToString() + pVal.ActionSuccess);
                             objInvoice.Item_Event(FormUID, ref pVal, ref BubbleEvent);
 
                         }

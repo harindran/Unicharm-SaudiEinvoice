@@ -88,8 +88,10 @@ namespace EInvoice.Business_Objects
             retstring += " Round(Tottb.\"Totnet\"-DOC.\"DiscSum\"+DOC .\"RoundDif\"," + Round + ") as \"Totnet1\" , ";
             retstring += " (Round(Tottb.\"Totnet\"-DOC.\"DiscSum\"+DOC .\"RoundDif\"," + Round + ")) - (Round(Tottb.\"Totrndnet\"-DOC.\"DiscSum\"+DOC .\"RoundDif\"," + Round + ")) as \"Roundtot\" , ";
 
-    
-            retstring += " case when DOC.\"DocType\"='S' then '3833' else '' End as \"BaseDoc\", ";//need udf
+
+            retstring += " case when DOC.\"DocType\"='S' then DOC.\"Comments\" else '' End as \"BaseDoc\", ";
+
+
             retstring += " case when DOC.\"DocType\"='S' then Doc.\"U_CNRsn\" else '' End as \"Comments\", ";
             retstring += " case when DOC.\"DocType\"='S' then '1' else '' End as \"Paymeanscode\", ";// justi
 
@@ -200,7 +202,11 @@ namespace EInvoice.Business_Objects
 
 
 
-            retstring += " case when DOC.\"DocType\"='S' then '3833' else baseDoc.\"DocNum\" End as \"BaseDoc\", ";//need udf
+            //retstring += " case when DOC.\"DocType\"='S' then '3833' else baseDoc.\"DocNum\" End as \"BaseDoc\", ";
+
+            retstring += " case when DOC.\"DocType\"='S' then DOC.\"Comments\" WHEN COALESCE(baseDoc.\"DocNum\",0)= 0 " +
+                         " THEN DOC.\"Comments\"  ELSE CAST(baseDoc.\"DocNum\" AS varchar(100)) End as \"BaseDoc\", ";
+            
             retstring += " Doc.\"U_CNRsn\"  as \"Comments\", ";//need udf 
             retstring += " case when DOC.\"DocType\"='S' then '1' else '1' End as \"Paymeanscode\", ";// justi
 

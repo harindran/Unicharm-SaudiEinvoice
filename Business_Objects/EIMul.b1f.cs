@@ -3,8 +3,10 @@ using SAPbouiCOM.Framework;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 using static EInvoice.Common.clsGlobalMethods;
 
 namespace EInvoice.Business_Objects
@@ -15,6 +17,7 @@ namespace EInvoice.Business_Objects
         public static SAPbouiCOM.Form objform;
         private clsGlobalMethods stf = new clsGlobalMethods();
         private SAPbouiCOM.ProgressBar obar;
+        private string ComboQr = "";
         public EIMul()
         {
         }
@@ -42,7 +45,7 @@ namespace EInvoice.Business_Objects
             this.Button2.ClickAfter += new SAPbouiCOM._IButtonEvents_ClickAfterEventHandler(this.Button2_ClickAfter);
             this.Button2.ClickBefore += new SAPbouiCOM._IButtonEvents_ClickBeforeEventHandler(this.Button2_ClickBefore);
             this.StaticText3 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_7").Specific));
-            this.ComboBox1 = ((SAPbouiCOM.ComboBox)(this.GetItem("Item_9").Specific));
+            this.ComboBox1 = ((SAPbouiCOM.ComboBox)(this.GetItem("sts").Specific));
             this.OnCustomInitialize();
 
         }
@@ -60,11 +63,21 @@ namespace EInvoice.Business_Objects
 
         private void OnCustomInitialize()
         {
+          string  strSQL = clsModule.objaddon.objglobalmethods.getSingleValue("Select \"U_Genmulstus\" from \"@EICON\" where \"Code\"='01'");
+            if (strSQL != "True")
+            {
+                clsModule.objaddon.objglobalmethods.Load_Combo(ComboBox1, "", new[] { "NOT_SENT,NOT_SENT"});
+            }
+            else
+            {
+                ComboQr = "SELECT DISTINCT  \"U_EINVStat\" as \"col1\" ,\"U_EINVStat\"  as \"col2\" FROM \"@EILOG\" e WHERE  \"U_EINVStat\" not in( 'CLEARED','REPORTED','') order by   \"col1\" ";
+                clsModule.objaddon.objglobalmethods.Load_Combo(ComboBox1, ComboQr, new[] { "NOT_SENT,NOT_SENT", "ALL,ALL" });
+            }
             ComboBox0.Select(0, SAPbouiCOM.BoSearchKey.psk_Index);
             ComboBox1.Select(0, SAPbouiCOM.BoSearchKey.psk_Index);
             EditText1.Value = DateTime.Today.ToString("yyyyMMdd");
             EditText0.Value = DateTime.Today.ToString("yyyyMMdd");
-            loaddata();
+           // loaddata();
         }
 
         private SAPbouiCOM.StaticText StaticText0;
@@ -105,6 +118,29 @@ namespace EInvoice.Business_Objects
                     sts = "'CLEARED','REPORTED'";
                     break;
             }
+
+            if (!string.IsNullOrEmpty(ComboBox1.Value.ToString()))
+            {
+                switch (ComboBox1.Value.ToString())
+                {
+                    case "ALL":                        
+                        rs = clsModule.objaddon.objglobalmethods.GetmultipleRS(ComboQr);
+                        for (int i = 0; i < rs.RecordCount; i++)
+                        {
+                            sts +="'"+ rs.Fields.Item("col1").Value+"',";
+
+                            rs.MoveNext();
+                        }
+                        sts += "''";
+                        break;
+                    case "NOT_SENT":
+                        sts = "''"; ;
+                        break;
+                    default:
+                        sts = "'" + ComboBox1.Value.ToString() + "'";
+                        break;
+                }
+            }
             switch (ComboBox0.Selected.Value)
             {
                 case "ALL":
@@ -128,7 +164,7 @@ namespace EInvoice.Business_Objects
 
 
                 string series = "";
-                 lstrquery = "SELECT o2.\"U_Prefix\"  FROM OUSR o LEFT JOIN OUBR o2 ON o2.\"Code\" = o.\"Branch\" WHERE o.USER_CODE = '" + clsModule.objaddon.objcompany.UserName + "'; ";
+                 lstrquery = "SELECT o2.\"U_Prefix\"  FROM OUSR o LEFT JOIN OUBR o2 ON o2.\"Code\" = o.\"Branch\" WHERE o.USER_CODE = '" + clsModule.objaddon.objcompany.UserName + "'  AND o2.\"U_Z_FrgnName\" ='Y' ";
                 rs = clsModule.objaddon.objglobalmethods.GetmultipleRS(lstrquery);
                 if (rs.RecordCount > 0)
                 {
@@ -215,56 +251,65 @@ namespace EInvoice.Business_Objects
                 }
               //  dt = clsModule.objaddon.objglobalmethods.GetmultipleValue(lstrquery);
                 objform.Freeze(true);
-                Grid1.DataTable.Rows.Clear();
-
+               
+                Grid1= (SAPbouiCOM.Grid)objform.Items.Item("grd").Specific;
                 //  rs= clsModule.objaddon.objglobalmethods.GetmultipleRS(lstrquery);
                 //if (rs.RecordCount > 0)
-               // {
-                    obar = clsModule.objaddon.objapplication.StatusBar.CreateProgressBar("Loading Please Wait", rs.RecordCount, true);
-                    Grid1.DataTable.ExecuteQuery(lstrquery);
+                // {
+                if (obar != null)
+                    obar.Stop();
 
-                    //Grid1.DataTable.Rows.Add(rs.RecordCount);
-                    //for (int i = 0; i < rs.RecordCount; i++)
-                    //{                  
-                    
-                        for (int i = 0; i < Grid1.Rows.Count ; i++)
-                        {
+                obar = clsModule.objaddon.objapplication.StatusBar.CreateProgressBar("Loading Please Wait", rs.RecordCount, true);
+                clsModule.objaddon.objapplication.StatusBar.SetText("Preparing Data..", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning);
+            
+                Grid1.DataTable.ExecuteQuery(lstrquery);
 
-                            this.Grid1.RowHeaders.SetText(i, (i + 1).ToString());
+                //Grid1.DataTable.Rows.Add(rs.RecordCount);
+                //for (int i = 0; i < rs.RecordCount; i++)
+                //{
+               
 
-                            // Grid1.DataTable.SetValue("Checkbox", i, "N");
-                            //Grid1.DataTable.SetValue("Doc Number", i, rs.Fields.Item("DocNum").Value.ToString());
-                            //Grid1.DataTable.SetValue("DocEntry", i, rs.Fields.Item("DocEntry").Value.ToString());
-                            //Grid1.DataTable.SetValue("Doc Date", i, rs.Fields.Item("DocDate").Value.ToString());
-                            //Grid1.DataTable.SetValue("Customer", i, rs.Fields.Item("CardName").Value.ToString());
-                            //Grid1.DataTable.SetValue("Total", i, rs.Fields.Item("DocTotal").Value.ToString());
-                            //Grid1.DataTable.SetValue("Status", i, rs.Fields.Item("status").Value.ToString());
-                            //Grid1.DataTable.SetValue("Warning", i, rs.Fields.Item("warn").Value.ToString());
-                            //Grid1.DataTable.SetValue("Error", i, rs.Fields.Item("Error").Value.ToString());
-                            //Grid1.DataTable.SetValue("Type", i, rs.Fields.Item("ttype").Value.ToString());
-                            switch (Grid1.DataTable.GetValue("status", i).ToString())
-                            {
-                                case "FAILED":
-                                case "CLEARED":
-                                case "REPORTED":
-                                case "NOT_CLEARED":
-                                    Grid1.CommonSetting.SetRowEditable(i + 1, false);
-                                    break;
-                            default:
-                                Grid1.CommonSetting.SetRowEditable(i + 1, true);
-                                break;
-                        }
+                    //for (int i = 0; i < Grid1.Rows.Count; i++)
+                    //{
 
-                            obar.Value += 1;
-                           // rs.MoveNext();
-                        }
-                    
+                    //    this.Grid1.RowHeaders.SetText(i, (i + 1).ToString());
+
+                    //    // Grid1.DataTable.SetValue("Checkbox", i, "N");
+                    //    //Grid1.DataTable.SetValue("Doc Number", i, rs.Fields.Item("DocNum").Value.ToString());
+                    //    //Grid1.DataTable.SetValue("DocEntry", i, rs.Fields.Item("DocEntry").Value.ToString());
+                    //    //Grid1.DataTable.SetValue("Doc Date", i, rs.Fields.Item("DocDate").Value.ToString());
+                    //    //Grid1.DataTable.SetValue("Customer", i, rs.Fields.Item("CardName").Value.ToString());
+                    //    //Grid1.DataTable.SetValue("Total", i, rs.Fields.Item("DocTotal").Value.ToString());
+                    //    //Grid1.DataTable.SetValue("Status", i, rs.Fields.Item("status").Value.ToString());
+                    //    //Grid1.DataTable.SetValue("Warning", i, rs.Fields.Item("warn").Value.ToString());
+                    //    //Grid1.DataTable.SetValue("Error", i, rs.Fields.Item("Error").Value.ToString());
+                    //    //Grid1.DataTable.SetValue("Type", i, rs.Fields.Item("ttype").Value.ToString());
+                    //    switch (Grid1.DataTable.GetValue("status", i).ToString())
+                    //    {
+                    //        case "FAILED":
+                    //        case "CLEARED":
+                    //        case "REPORTED":
+                    //        case "NOT_CLEARED":
+                    //            Grid1.CommonSetting.SetRowEditable(i + 1, false);
+                    //            break;
+
+                    //        default:
+                    //            Grid1.CommonSetting.SetRowEditable(i + 1, true);
+                    //            break;
+                    //    }
+
+                    //    obar.Value += 1;
+                    //    // rs.MoveNext();
+                    //}
+                
                     SAPbouiCOM.EditTextColumn oColumns;
                     oColumns = (SAPbouiCOM.EditTextColumn)Grid1.Columns.Item("DocEntry");
                     oColumns.LinkedObjectType = "13";
                     oColumns = (SAPbouiCOM.EditTextColumn)Grid1.Columns.Item("Checkbox");
                     oColumns.Type = SAPbouiCOM.BoGridColumnType.gct_CheckBox;
-              //  }                                   
+                Colsetting();
+                clsModule.objaddon.objapplication.StatusBar.SetText("Opereation Completed Successfully...", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning);
+                //  }                                   
             }
             catch (Exception ex)
             {
@@ -303,40 +348,101 @@ namespace EInvoice.Business_Objects
                 objform.Freeze(true);
                 if (Grid1.Rows.Count > 0)
                 {
-                    for (int i = 0; i < Grid1.Rows.Count; i++)
+
+
+
+                    string xmlString = Grid1.DataTable.SerializeAsXML(SAPbouiCOM.BoDataTableXmlSelect.dxs_All);
+                    XDocument xdoc = XDocument.Parse(xmlString);
+                 
+
+
+                    var filteredData = xdoc.Descendants("Row")
+          .Select((row, index) => new
+          {
+             index=index+1,
+              ColumnUid = row.Element("Cells").Element("Cell").Element("ColumnUid").Value,
+              Value = row.Element("Cells").Element("Cell").Element("Value").Value
+          })
+          .Where(cell => cell.ColumnUid == "Checkbox" && cell.Value=="Y")
+          .ToList();
+
+
+                    for (int filrow = 0; filrow < filteredData.Count; filrow++)
                     {
-                        string lstrdocentry = Grid1.DataTable.Columns.Item("DocEntry").Cells.Item(i).Value.ToString();
-                        string lstrcheckbox = Grid1.DataTable.Columns.Item("Checkbox").Cells.Item(i).Value.ToString();
-                        string trnasType ="" ;
+                        int i=(filteredData[filrow].index)-1;
 
-                        switch (Grid1.DataTable.Columns.Item("Type").Cells.Item(i).Value.ToString())
                         {
-                            case "INV":
-                            case "DBN":
-                                trnasType = "INV";
-                                break;
-                            case "CRN":
-                                trnasType = "CRN";
-                                break;
-                        }
-                        DataTable dt = new DataTable();                        
-                        clsModule.objaddon.objapplication.StatusBar.SetText("Progress...." + (i+1) + "/" + Grid1.Rows.Count, SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Warning);
+                            string lstrdocentry = Grid1.DataTable.Columns.Item("DocEntry").Cells.Item(i).Value.ToString();
+                            string lstrcheckbox = Grid1.DataTable.Columns.Item("Checkbox").Cells.Item(i).Value.ToString();
+                            string trnasType = "";
 
-                        if (lstrcheckbox == "Y")
-                        {
+                            switch (Grid1.DataTable.Columns.Item("Type").Cells.Item(i).Value.ToString())
+                            {
+                                case "INV":
+                                case "DBN":
+                                    trnasType = "INV";
+                                    break;
+                                case "CRN":
+                                    trnasType = "CRN";
+                                    break;
+                            }
+                            DataTable dt = new DataTable();
+
+                            clsModule.objaddon.objapplication.StatusBar.SetText("Progress...."+lstrdocentry , SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Warning);
+
+                            if (lstrcheckbox == "Y")
+                            {
 
 
-                            clsModule.objaddon.objInvoice.Generate_Cancel_IRN(ClsARInvoice.EinvoiceMethod.CreateIRN, lstrdocentry, trnasType, "E-Invoice", ref dt, true);
-                            Grid1.DataTable.SetValue("status", i, columnFind(dt, "InvoiceStatus", 0));
-                            Grid1.DataTable.SetValue("Warning", i, columnFind(dt, "WarningList", 0));
-                            Grid1.DataTable.SetValue("Error", i, columnFind(dt, "ErrorList", 0));
-                            Grid1.DataTable.SetValue("Checkbox", i, "N");
-                            Grid1.CommonSetting.SetRowEditable(i+1, false);
+                                clsModule.objaddon.objInvoice.Generate_Cancel_IRN(ClsARInvoice.EinvoiceMethod.CreateIRN, lstrdocentry, trnasType, "E-Invoice", ref dt, true);
+                                Grid1.DataTable.SetValue("status", i, columnFind(dt, "InvoiceStatus", 0));
+                                Grid1.DataTable.SetValue("Warning", i, columnFind(dt, "WarningList", 0));
+                                Grid1.DataTable.SetValue("Error", i, columnFind(dt, "ErrorList", 0));
+                                Grid1.DataTable.SetValue("Checkbox", i, "N");
+                                Grid1.CommonSetting.SetRowEditable(i + 1, false);
+
+                            }
 
                         }
 
                     }
+
+                    #region "com"
+                    //for (int i = 0; i < Grid1.Rows.Count; i++)
+                    //{
+                    //    string lstrdocentry = Grid1.DataTable.Columns.Item("DocEntry").Cells.Item(i).Value.ToString();
+                    //    string lstrcheckbox = Grid1.DataTable.Columns.Item("Checkbox").Cells.Item(i).Value.ToString();
+                    //    string trnasType ="" ;
+
+                    //    switch (Grid1.DataTable.Columns.Item("Type").Cells.Item(i).Value.ToString())
+                    //    {
+                    //        case "INV":
+                    //        case "DBN":
+                    //            trnasType = "INV";
+                    //            break;
+                    //        case "CRN":
+                    //            trnasType = "CRN";
+                    //            break;
+                    //    }
+                    //    DataTable dt = new DataTable();                        
+                    //    clsModule.objaddon.objapplication.StatusBar.SetText("Progress...." + (i+1) + "/" + Grid1.Rows.Count, SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Warning);
+
+                    //    if (lstrcheckbox == "Y")
+                    //    {
+
+
+                    //        clsModule.objaddon.objInvoice.Generate_Cancel_IRN(ClsARInvoice.EinvoiceMethod.CreateIRN, lstrdocentry, trnasType, "E-Invoice", ref dt, true);
+                    //        Grid1.DataTable.SetValue("status", i, columnFind(dt, "InvoiceStatus", 0));
+                    //        Grid1.DataTable.SetValue("Warning", i, columnFind(dt, "WarningList", 0));
+                    //        Grid1.DataTable.SetValue("Error", i, columnFind(dt, "ErrorList", 0));
+                    //        Grid1.DataTable.SetValue("Checkbox", i, "N");
+                    //        Grid1.CommonSetting.SetRowEditable(i+1, false);
+
+                    //    }
+
+                    //}
                     //   loaddata(true);
+                    #endregion "com"
                     clsModule.objaddon.objapplication.StatusBar.SetText("Operation Completed successfully....", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Success);
                     objform.Items.Item("Item_0").Click();
                 }
@@ -354,7 +460,17 @@ namespace EInvoice.Business_Objects
         }
 
         private SAPbouiCOM.Button Button2;
-
+        private void Colsetting()
+        {
+            for (int i = 0; i < this.Grid1.Columns.Count; i++)
+            {
+                this.Grid1.Columns.Item(i).TitleObject.Sortable = true;
+               
+                Grid1.Columns.Item(i).Editable = true;
+            }
+            this.Grid1.SelectionMode = SAPbouiCOM.BoMatrixSelect.ms_Single;
+            Grid1.AutoResizeColumns();
+        }
         private void Button2_ClickBefore(object sboObject, SAPbouiCOM.SBOItemEventArg pVal, out bool BubbleEvent)
         {
             BubbleEvent = true;
@@ -393,21 +509,30 @@ namespace EInvoice.Business_Objects
         private void Button1_ClickBefore(object sboObject, SAPbouiCOM.SBOItemEventArg pVal, out bool BubbleEvent)
         {            
             BubbleEvent = true;
-            bool checkvalue = false; ;
+            bool checkvalue = false; 
             Grid1.Columns.Item("Checkbox").Visible = true;
 
 
-            for (int i = 0; i < Grid1.Rows.Count; i++)
+            string xmlString = Grid1.DataTable.SerializeAsXML(SAPbouiCOM.BoDataTableXmlSelect.dxs_All);
+            XDocument xdoc = XDocument.Parse(xmlString);
+
+
+
+            var filteredData = xdoc.Descendants("Row")
+  .Select((row, index) => new
+  {
+      index = index + 1,
+      ColumnUid = row.Element("Cells").Element("Cell").Element("ColumnUid").Value,
+      Value = row.Element("Cells").Element("Cell").Element("Value").Value
+  })
+  .Where(cell => cell.ColumnUid == "Checkbox" && cell.Value == "Y")
+  .ToList();
+
+            if (filteredData.Count>0)
             {
-
-                string ss2 = Grid1.DataTable.Columns.Item("Checkbox").Cells.Item(i).Value.ToString();
-                if (ss2 == "Y")
-                {
-                    checkvalue = true;
-                    break;
-                }
-
+                checkvalue = true;
             }
+
             if (!checkvalue)
             {
                 Application.SBO_Application.SetStatusBarMessage("Please Select Checkbox !!!!", SAPbouiCOM.BoMessageTime.bmt_Short, true);

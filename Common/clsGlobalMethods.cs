@@ -36,25 +36,27 @@ namespace EInvoice.Common
                 SAPbobsCOM.Recordset objRs;
 
                 string[] split_char;
-                
-             
 
 
 
-                objRs = (SAPbobsCOM.Recordset)clsModule.objaddon.objcompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
-
-                objRs.DoQuery(Query);
-           
-                if (objRs.RecordCount == 0) return;
-
-                for (int i = 0; i < objRs.RecordCount; i++)
-
+                if (!string.IsNullOrEmpty(Query))
                 {
-                    
-                    comboBox.ValidValues.Add(objRs.Fields.Item(0).Value.ToString(), objRs.Fields.Item(1).Value.ToString());
 
-                    objRs.MoveNext();
+                    objRs = (SAPbobsCOM.Recordset)clsModule.objaddon.objcompany.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
 
+                    objRs.DoQuery(Query);
+
+                    if (objRs.RecordCount == 0) return;
+
+                    for (int i = 0; i < objRs.RecordCount; i++)
+
+                    {
+
+                        comboBox.ValidValues.Add(objRs.Fields.Item(0).Value.ToString(), objRs.Fields.Item(1).Value.ToString());
+
+                        objRs.MoveNext();
+
+                    }
                 }
                 if (Validvalues != null)
                 {

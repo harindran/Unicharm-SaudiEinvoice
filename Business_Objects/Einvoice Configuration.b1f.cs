@@ -75,6 +75,7 @@ namespace EInvoice.Business_Objects
             this.Grid1.DoubleClickAfter += new SAPbouiCOM._IGridEvents_DoubleClickAfterEventHandler(this.Grid1_DoubleClickAfter);
             this.StaticText11 = ((SAPbouiCOM.StaticText)(this.GetItem("Item_8").Specific));
             this.EditText10 = ((SAPbouiCOM.EditText)(this.GetItem("Livedb").Specific));
+            this.CheckBox1 = ((SAPbouiCOM.CheckBox)(this.GetItem("Item_18").Specific));
             this.OnCustomInitialize();
 
         }
@@ -163,6 +164,7 @@ namespace EInvoice.Business_Objects
                 oGeneralData.SetProperty("U_Cryspath", EditText8.Value);
                 oGeneralData.SetProperty("U_LiveDB", EditText10.Value);
                 oGeneralData.SetProperty("U_CloseInv", CheckBox0.Checked.ToString());
+                oGeneralData.SetProperty("U_Genmulstus", CheckBox1.Checked.ToString());
                 if (!string.IsNullOrEmpty(EditText9.Value))
                 {
                     DateTime startDate;
@@ -391,7 +393,11 @@ namespace EInvoice.Business_Objects
                 {
                     CheckBox0.Checked = true;
                 }
-
+                strSQL = clsModule.objaddon.objglobalmethods.getSingleValue("Select \"U_Genmulstus\" from \"@EICON\" where \"Code\"='01'");
+                if (strSQL == "True")
+                {
+                    CheckBox1.Checked = true;
+                }
 
                 radioselect();
 
@@ -480,5 +486,6 @@ namespace EInvoice.Business_Objects
 
         private SAPbouiCOM.StaticText StaticText11;
         private SAPbouiCOM.EditText EditText10;
+        private SAPbouiCOM.CheckBox CheckBox1;
     }
 }

@@ -764,11 +764,20 @@ namespace EInvoice.Business_Objects
 
                 clsModule.objaddon.objapplication.StatusBar.SetText("Creating XML. Please Wait...." + DocEntry, SAPbouiCOM.BoMessageTime.bmt_Medium, SAPbouiCOM.BoStatusBarMessageType.smt_Warning);
 
-                string Xml64 = clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND (CAST(\"U_INVXml\" AS Varchar) <>'' or CAST(\"U_INVXml2\" AS Varchar) <>'') and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
-                Xml64 += clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml2\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND (CAST(\"U_INVXml\" AS Varchar) <>'' or CAST(\"U_INVXml2\" AS Varchar) <>'') and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
-                Xml64 += clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml3\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND (CAST(\"U_INVXml\" AS Varchar) <>'' or CAST(\"U_INVXml2\" AS Varchar) <>'') and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
-                Xml64 += clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml4\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND (CAST(\"U_INVXml\" AS Varchar) <>'' or CAST(\"U_INVXml2\" AS Varchar) <>'') and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
-                Xml64 += clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml5\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND (CAST(\"U_INVXml\" AS Varchar) <>'' or CAST(\"U_INVXml2\" AS Varchar) <>'') and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
+                    string XMLcondition = "( ";
+                    XMLcondition += " CAST(\"U_INVXml\" AS Varchar) <>'' ";
+                    XMLcondition += " or CAST(\"U_INVXml2\" AS Varchar) <>'' ";
+                    XMLcondition += " or CAST(\"U_INVXml3\" AS Varchar) <>'' ";
+                    XMLcondition += " or CAST(\"U_INVXml4\" AS Varchar) <>'' ";
+                    XMLcondition += " or CAST(\"U_INVXml5\" AS Varchar) <>'' ";
+                    XMLcondition += " )";
+
+
+               string Xml64 = clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND "+ XMLcondition +" and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
+                Xml64 += clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml2\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND "+ XMLcondition + " and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
+                Xml64 += clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml3\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND " + XMLcondition + " and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
+                Xml64 += clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml4\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND " + XMLcondition + " and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
+                Xml64 += clsModule.objaddon.objglobalmethods.getSingleValue("SELECT COALESCE (CAST(\"U_INVXml5\" AS varchar),'')  from \"@EILOG\"  where \"U_DocEntry\"=" + DocEntry + " AND " + XMLcondition + " and \"U_INVTyp\"='" + Cleartype + "' order by \"DocEntry\" desc ");
 
                 string Xmlpath = SysPath + "_XML.XMl";
 
@@ -1159,17 +1168,24 @@ namespace EInvoice.Business_Objects
                                     }
                                 });
 
-                                GenerateIRNGetJson.EInvoice.BillingReference.Add(new BillingReference
+                                bool isValueExists = GenerateIRNGetJson.EInvoice.BillingReference.Any(billingReference =>
+                            billingReference.InvoiceDocumentReference.ID.en == invrecordset.Fields.Item("BaseDoc").Value.ToString());
+
+                                if (!isValueExists)
                                 {
-                                    InvoiceDocumentReference = new InvoiceDocumentReference
+                                    GenerateIRNGetJson.EInvoice.BillingReference.Add(new BillingReference
                                     {
-                                        ID = new ID
+                                        InvoiceDocumentReference = new InvoiceDocumentReference
                                         {
-                                            ar = null,
-                                            en = invrecordset.Fields.Item("BaseDoc").Value.ToString()
+                                            ID = new ID
+                                            {
+                                                ar = null,
+                                                en = invrecordset.Fields.Item("BaseDoc").Value.ToString()
+                                            }
                                         }
-                                    }
-                                });
+                                    });
+                                }
+
                                 if (invrecordset.Fields.Item("LineAllow").Value.ToString() != "0")
                                 {
                                     GenerateIRNGetJson.EInvoice.AllowanceCharge.Add(new AllowanceCharge
@@ -1259,11 +1275,17 @@ namespace EInvoice.Business_Objects
                             {
                                 if (!frommul)
                                 {
-                                    if (datatable.Rows[0]["ErrorList"].ToString() != "[]")
+                                    if (columnFind(datatable, "ErrorMessage", 0) != "")
+                                    {
+                                        msg = datatable.Rows[0]["ErrorMessage"].ToString();
+                                        clsModule.objaddon.objapplication.MessageBox("Generate: " + msg);
+                                    }
+                                    else if (columnFind(datatable, "ErrorList", 0) != "[]")
                                     {
                                         msg = datatable.Rows[0]["ErrorList"].ToString();
                                         clsModule.objaddon.objapplication.MessageBox("Generate: " + msg);
                                     }
+                                     
                                 }
                                 Einvlog =E_Invoice_Logs(DocEntry, datatable, TransType, "Create", Type);
                                 
@@ -1283,6 +1305,8 @@ namespace EInvoice.Business_Objects
 
                         if (Einvstus == "CLEARED")
                         {
+
+
                             if (Tempstatus != Einvstus && (!string.IsNullOrEmpty(Tempstatus)))
                             {                                
                                 if (!Einvlog)
@@ -1290,6 +1314,12 @@ namespace EInvoice.Business_Objects
                                     E_Invoice_Logs(DocEntry, datatable, TransType, "Create", Type);
                                 }
 
+                            }
+                          string lstr=  "SELECT Count(*) FROM \"@EILOG\" WHERE \"U_DocEntry\" = '"+ DocEntry  + "' and \"U_INVTyp\" ='"+ TransType + "' ";
+                            
+                            if (clsModule.objaddon.objglobalmethods.getSingleValue(lstr)=="0")
+                            {
+                                E_Invoice_Logs(DocEntry, datatable, TransType, "Create", "SaveLog");
                             }
 
                             if (PrintEmbedded(DocEntry, TransType))
@@ -1442,7 +1472,7 @@ namespace EInvoice.Business_Objects
             objsalesinvoice.UserFields.Fields.Item("U_EinvStatus").Value = (string.IsNullOrEmpty(columnFind(einvDT, "InvoiceStatus", 0)) ? "FAILED" : columnFind(einvDT, "InvoiceStatus", 0));
             objsalesinvoice.UserFields.Fields.Item("U_Issuedt").Value = columnFind(einvDT, "GeneratedDate", 0);
             objsalesinvoice.UserFields.Fields.Item("U_Warn").Value = columnFind(einvDT, "WarningList", 0);
-            objsalesinvoice.UserFields.Fields.Item("U_Error").Value = columnFind(einvDT, "ErrorList", 0);
+            objsalesinvoice.UserFields.Fields.Item("U_Error").Value = columnFind(einvDT, "ErrorList", 0) + columnFind(einvDT, "ErrorMessage", 0);
             objsalesinvoice.UserFields.Fields.Item("U_ICVNo").Value = columnFind(einvDT, "ICV", 0);
             objsalesinvoice.CreateQRCodeFrom = columnFind(einvDT, "RawQRCode", 0);
             objsalesinvoice.Update();
@@ -1595,6 +1625,16 @@ namespace EInvoice.Business_Objects
                                 datatable = clsModule.objaddon.objglobalmethods.Jsontodt(Json);
                             }
                         }
+                        else if (httpWebResponse.StatusCode == HttpStatusCode.Unauthorized)
+                        {
+                            using (Stream errorResponseStream = httpWebResponse.GetResponseStream())
+                            {
+                                StreamReader rdr = new StreamReader(errorResponseStream, Encoding.UTF8);
+                                string Json = rdr.ReadToEnd();
+                                clsModule.objaddon.objglobalmethods.WriteErrorLog(Json);
+                                datatable = clsModule.objaddon.objglobalmethods.Jsontodt(Json);
+                            }
+                        }
                     }
                 }
 
@@ -1688,6 +1728,35 @@ namespace EInvoice.Business_Objects
                         return;
                     }
                 }
+
+                string strsql;
+                DataTable dt = new DataTable();
+
+
+                strsql = "select \"DocNum\",\"DocDate\" from  " + tablename + " where \"DocEntry\"=" + DocEntry;
+                dt = clsModule.objaddon.objglobalmethods.GetmultipleValue(strsql);
+
+                if (dt.Rows.Count > 0)
+                {
+
+                    DateTime stdt;
+                    DateTime docdt;
+
+                    string stdate = clsModule.objaddon.objglobalmethods.getSingleValue("SELECT  \"U_Startdate\" FROM \"@EICON\" e WHERE \"Code\" = '01'");
+
+                    DateTime.TryParseExact(stdate, CultureInfo.CurrentCulture.DateTimeFormat.GetAllDateTimePatterns(), CultureInfo.InvariantCulture, DateTimeStyles.None, out stdt);
+                    DateTime.TryParseExact(clsModule.objaddon.objglobalmethods.DateFormat(clsModule.objaddon.objglobalmethods.Getdateformat(Convert.ToString(dt.Rows[0]["DocDate"])), "dd/MM/yyyy", "yyyy-MM-dd"), CultureInfo.CurrentCulture.DateTimeFormat.GetAllDateTimePatterns(), CultureInfo.InvariantCulture, DateTimeStyles.None, out docdt);
+                    if (!string.IsNullOrEmpty(stdate))
+                    {
+                        if (!(docdt >= stdt))
+                        {
+                            button.Item.Enabled = false;
+                            return;
+                        }
+                    }
+
+                }
+
                 string cancel = oForm.DataSources.DBDataSources.Item(tablename).GetValue("CANCELED", 0);
 
                 if (cancel == "Y" || cancel =="C") //N
@@ -1725,33 +1794,7 @@ namespace EInvoice.Business_Objects
 
                 List<string> Checkdoc = new List<string>();
                 List<string> savedoc = new List<string>();
-                string strsql;
-                DataTable dt = new DataTable();
-
-
-                strsql = "select \"DocNum\",\"DocDate\" from  " + tablename + " where \"DocEntry\"=" + DocEntry;
-                dt = clsModule.objaddon.objglobalmethods.GetmultipleValue(strsql);
-
-                if (dt.Rows.Count>0)
-                {
-
-                    DateTime stdt;
-                    DateTime docdt;
-
-                    string stdate = clsModule.objaddon.objglobalmethods.getSingleValue("SELECT  \"U_Startdate\" FROM \"@EICON\" e WHERE \"Code\" = '01'");
-
-                    DateTime.TryParseExact(stdate, CultureInfo.CurrentCulture.DateTimeFormat.GetAllDateTimePatterns(), CultureInfo.InvariantCulture, DateTimeStyles.None, out stdt);
-                    DateTime.TryParseExact(clsModule.objaddon.objglobalmethods.DateFormat(clsModule.objaddon.objglobalmethods.Getdateformat(Convert.ToString(dt.Rows[0]["DocDate"])), "dd/MM/yyyy", "yyyy-MM-dd"), CultureInfo.CurrentCulture.DateTimeFormat.GetAllDateTimePatterns(), CultureInfo.InvariantCulture, DateTimeStyles.None, out docdt);
-                    if (!string.IsNullOrEmpty(stdate))
-                    {
-                        if (!(docdt >= stdt))
-                        {
-                            button.Item.Enabled = false;
-                            return;
-                        }
-                    }
-
-                }
+             
 
                 if (dt.Rows.Count > 0)
                 {

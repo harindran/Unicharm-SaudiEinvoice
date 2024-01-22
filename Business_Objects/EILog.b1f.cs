@@ -57,7 +57,7 @@ namespace EInvoice.Business_Objects
            
             EditText1.Value = DateTime.Today.ToString("yyyyMMdd");
             EditText0.Value = DateTime.Today.ToString("yyyyMMdd");
-            Loaddata();
+            //Loaddata();
             string qr = "SELECT DISTINCT  \"U_EINVStat\" as \"col1\" ,\"U_EINVStat\"  as \"col2\" FROM \"@EILOG\" e WHERE  \"U_EINVStat\"<>'' order by   \"col1\" ";
             clsModule.objaddon.objglobalmethods.Load_Combo(ComboBox0, qr,new[] { "NOT_SENT,NOT_SENT","ALL,ALL" });
 
@@ -78,7 +78,7 @@ namespace EInvoice.Business_Objects
             {
                 
                 string series = "";
-              string  lstrquery = "SELECT o2.\"U_Prefix\"  FROM OUSR o LEFT JOIN OUBR o2 ON o2.\"Code\" = o.\"Branch\" WHERE o.USER_CODE = '" + clsModule.objaddon.objcompany.UserName + "'; ";
+              string  lstrquery = "SELECT o2.\"U_Prefix\"  FROM OUSR o LEFT JOIN OUBR o2 ON o2.\"Code\" = o.\"Branch\" WHERE o.USER_CODE = '" + clsModule.objaddon.objcompany.UserName + "'  AND o2.\"U_Z_FrgnName\" ='Y'  ";
                SAPbobsCOM.Recordset rs = clsModule.objaddon.objglobalmethods.GetmultipleRS(lstrquery);
                 if (rs.RecordCount > 0)
                 {
@@ -95,17 +95,20 @@ namespace EInvoice.Business_Objects
 
                 DataTable dt = new DataTable();
                 string query = "SELECT ";
-                query += " \"DocNum\" as \"Doc Num\", ";
-                query += " \"DocEntry\" as \"DocEntry\", ";
-                query += " \"DocDate\" as \"Doc Date\", ";
+                query += " \"DocEntry\" as \"Internal Number\", ";
+                query += " \"DocNum\" as \"Doc No.\", ";
+                
+                query += " \"DocDate\" as \"Posting Date\", ";
+                query += "  (SELECT \"SeriesName\"  FROM NNM1 n WHERE n.\"Series\"=s.\"Series\"  ) AS \"Series\", ";
+                
                 query += " \"INVTyp\" as \"Doc Type\", ";
                 query += " \"QRCode\" as \"QR Code\", ";
-                query += " \"EINVStat\" as \"E - Inv Status\", ";
+                query += " \"EINVStat\" as \"E-Inv Status\", ";
                 query += " \"QrStat\" as \"QR Status\", ";
                 query += " \"IssueDt\" as \"E-Inv Date\", ";
                 query += " \"Issuetm\" as \"E-Inv time\", ";
-                query += " \"ErrList\" as \"Error\", ";
-                query += " \"WarnList\" as \"Warning\", ";
+                query += " \"ErrList\" as \"Error Message\", ";
+                query += " \"WarnList\" as \"Warning Message\", ";
                 query += " \"SellVat\" as \"Seller VAT\", ";
                 query += " \"BuyVat\" as \"Buyer VAT\", ";
                 query += " \"ICV\" as \"ICV\", ";
@@ -117,13 +120,14 @@ namespace EInvoice.Business_Objects
                 query += " \"INVXml\" as \"XML\", ";
                 query += " \"valid\" as \"valid\", ";
                 query += " \"UniqID\" as \"UniqID\", ";
-                query += " \"UniqReqID\" as \"UniqReqID\", ";
-                query += " \"INVTyp\" as \"INVTyp\" ";
+                query += " \"UniqReqID\" as \"UniqReqID\" ";
+                //query += " \"INVTyp\" as \"INVTyp\" ";
 
                 query += " FROM(";
                 query += "SELECT COALESCE(IDoc.\"DocNum\",CDoc.\"DocNum\",DDoc.\"DocNum\") as \"DocNum\", ";
                 query += " COALESCE(IDoc.\"DocEntry\",CDoc.\"DocEntry\",DDoc.\"DocEntry\") as \"DocEntry\", ";
                 query += " COALESCE(IDoc.\"DocDate\",CDoc.\"DocDate\",DDoc.\"DocDate\") as \"DocDate\", ";
+                query += " COALESCE(IDoc.\"Series\",CDoc.\"Series\",DDoc.\"Series\") as \"Series\", ";
 
                 query += " Elog.\"U_Status\" as \"Status\",ELog.\"U_QRCod\" as \"QRCode\",ELog.\"U_RawQR\" as \"RawQR\",Elog.\"U_UUID\" as \"UUID\",Elog.\"U_PIH\" as \"PIH\", ";
                 query += " Elog.\"U_InvHash\" as \"InvHash\",Elog.\"U_ICV\" as \"ICV\",Elog.\"U_DeviceId\" as \"DeviceId\" ,Elog.\"U_SellVat\" as \"SellVat\", ";
@@ -216,7 +220,7 @@ namespace EInvoice.Business_Objects
                     query += " WHERE s.rowss=1 ";
                 }
 
-                query += " ORDER BY s.\"DocEntry\" ";
+                query += " ORDER BY s.\"DocEntry\",s.\"IssueDt\",s.\"Issuetm\" ";
                 clsModule.objaddon.objapplication.StatusBar.SetText("Preparing Data..", SAPbouiCOM.BoMessageTime.bmt_Short, SAPbouiCOM.BoStatusBarMessageType.smt_Warning);
 
                 //   dt = clsModule.objaddon.objglobalmethods.GetmultipleValue(query);
@@ -224,7 +228,7 @@ namespace EInvoice.Business_Objects
               
            
                 SAPbouiCOM.EditTextColumn oColumns;
-                oColumns = (SAPbouiCOM.EditTextColumn)Grid0.Columns.Item("DocEntry");
+                oColumns = (SAPbouiCOM.EditTextColumn)Grid0.Columns.Item("Internal Number");
                 oColumns.LinkedObjectType = "13";
                 Colsetting();
                 
@@ -286,8 +290,8 @@ namespace EInvoice.Business_Objects
         {
             
             SAPbouiCOM.EditTextColumn oColumns;
-            oColumns = (SAPbouiCOM.EditTextColumn)Grid0.Columns.Item("DocEntry");
-            string lstrtype = Grid0.DataTable.Columns.Item("INVTyp").Cells.Item(pVal.Row).Value.ToString();
+            oColumns = (SAPbouiCOM.EditTextColumn)Grid0.Columns.Item("Internal Number");
+            string lstrtype = Grid0.DataTable.Columns.Item("Doc Type").Cells.Item(pVal.Row).Value.ToString();
             switch (lstrtype)
             {
                 case "CRN":
